@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Clock + Weather + Pet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/pi-clock-pet
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/home/pi/pi-clock-pet/.venv/bin/python /home/pi/pi-clock-pet/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
