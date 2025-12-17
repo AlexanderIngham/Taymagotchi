@@ -25,11 +25,18 @@ class Sprites:
 
         # Weather icons
         self.weather = {
-            "clear": self._load("assets/sprites/weather/clear.png"),
-            "clouds": self._load("assets/sprites/weather/clouds.png"),
-            "rain": self._load("assets/sprites/weather/rain.png"),
-            "snow": self._load("assets/sprites/weather/snow.png"),
-            "mist": self._load("assets/sprites/weather/mist.png"),
+            "clear": self._load("assets/sprites/icons/sun.png"),
+            "clouds": self._load("assets/sprites/icons/cloud.png"),
+            "rain": self._load("assets/sprites/icons/rain.png"),
+            "snow": self._load("assets/sprites/icons/snow.png"),
+            "mist": self._load("assets/sprites/icons/mist.png"),
+        }
+        
+        # Status bar icons
+        self.status_icons = {
+            "feed": self._load("assets/sprites/icons/burger.png"),
+            "drink": self._load("assets/sprites/icons/water.png"),
+            "play": self._load("assets/sprites/icons/heart.png"),
         }
 
         # Backgrounds
@@ -130,28 +137,26 @@ def draw_clock(surface: pygame.Surface, fonts: Fonts, text_color=(20, 20, 20)):
     surface.blit(date_surf, (int(settings.WINDOW_WIDTH * 0.05), int(settings.WINDOW_HEIGHT * 0.30)))
 
 
-def draw_weather(surface, fonts: Fonts, sprites, weather, text_color=(20, 20, 20)):
-    """Draw current weather using emojis instead of images."""
+def draw_weather(surface, fonts: Fonts, sprites: Sprites, weather, text_color=(20, 20, 20)):
+    """Draw current weather using icon images."""
     if not weather:
         return
 
-    # Pick emoji
-    emoji_map = {
-        "clear": "☀️",
-        "clouds": "☁️",
-        "rain": "🌧️",
-        "snow": "❄️",
-        "mist": "🌫️",
-    }
-    emoji = emoji_map.get(weather.icon_key, "🌤️")
-
-    # Choose position and render
+    # Get the weather icon sprite
+    icon = sprites.weather.get(weather.icon_key)
+    
+    # Choose position
     x = settings.WINDOW_WIDTH - int(settings.WINDOW_WIDTH * 0.05)
     y = int(settings.WINDOW_HEIGHT * 0.05)
 
-    emoji_font = pygame.font.SysFont("Segoe UI Emoji", int(settings.WINDOW_HEIGHT * 0.18))
-    emoji_surf = emoji_font.render(emoji, True, text_color)
-    surface.blit(emoji_surf, (x - emoji_surf.get_width(), y))
+    # Scale the icon to appropriate size
+    icon_size = int(settings.WINDOW_HEIGHT * 0.15)
+    if icon:
+        scaled_icon = pygame.transform.scale(icon, (icon_size, icon_size))
+        surface.blit(scaled_icon, (x - icon_size, y))
+        icon_width = icon_size
+    else:
+        icon_width = icon_size  # Use same spacing even if no icon
 
     # Draw temperature + condition text (slightly lighter/darker for condition)
     cond_color = tuple(min(255, c + 40) if c < 128 else max(0, c - 40) for c in text_color)
@@ -161,8 +166,8 @@ def draw_weather(surface, fonts: Fonts, sprites, weather, text_color=(20, 20, 20
     temp_surf = fonts.medium.render(temp_text, True, text_color)
     cond_surf = fonts.small.render(cond_text, True, cond_color)
 
-    surface.blit(temp_surf, (x - emoji_surf.get_width() - temp_surf.get_width() - 12, y + 8))
-    surface.blit(cond_surf, (x - emoji_surf.get_width() - cond_surf.get_width() - 12,
+    surface.blit(temp_surf, (x - icon_width - temp_surf.get_width() - 12, y + 8))
+    surface.blit(cond_surf, (x - icon_width - cond_surf.get_width() - 12,
                              y + temp_surf.get_height() + 8))
 
 
@@ -189,9 +194,15 @@ def draw_pet(surface: pygame.Surface, sprites: Sprites, mood: str):
     return pygame.Rect(x, y, target_w, target_h)
 
 
-def draw_floating_hearts(surface: pygame.Surface, fonts: Fonts, floating_hearts: list, text_color=(20, 20, 20)):
-    """Draw floating hearts animation."""
-    emoji_font = pygame.font.SysFont("Segoe UI Emoji", int(settings.WINDOW_HEIGHT * 0.06))
+def draw_floating_hearts(surface: pygame.Surface, sprites: Sprites, floating_hearts: list):
+    """Draw floating hearts animation using heart icon."""
+    # Get heart icon and scale it
+    heart_icon = sprites.status_icons.get("play")
+    if not heart_icon:
+        return
+    
+    icon_size = int(settings.WINDOW_HEIGHT * 0.06)
+    scaled_heart = pygame.transform.scale(heart_icon, (icon_size, icon_size))
     
     for heart in floating_hearts:
         # Only draw if delay has passed (age > 0)
@@ -199,8 +210,8 @@ def draw_floating_hearts(surface: pygame.Surface, fonts: Fonts, floating_hearts:
             # Calculate fade based on age
             alpha = max(0, min(255, int(255 * (1 - heart['age'] / heart['lifespan']))))
             
-            # Render heart emoji
-            heart_surf = emoji_font.render("❤️", True, text_color)
+            # Create a copy to apply alpha
+            heart_surf = scaled_heart.copy()
             
             # Apply alpha (fade out)
             if alpha < 255:
@@ -237,9 +248,9 @@ def draw_pet_status(surface: pygame.Surface, fonts: Fonts, mood: str, text_color
     surface.blit(status_surf, (x, y))
 
 
-def draw_status_bars(surface: pygame.Surface, fonts: Fonts, pet_state, text_color=(20, 20, 20), dragged_emoji=None, drag_pos=None):
-    """Draw hunger, thirst, and happiness bars at the bottom with emoji labels.
-    Returns a dict mapping emoji to their rect positions for touch detection."""
+def draw_status_bars(surface: pygame.Surface, fonts: Fonts, sprites: Sprites, pet_state, text_color=(20, 20, 20), dragged_icon=None, drag_pos=None):
+    """Draw hunger, thirst, and happiness bars at the bottom with icon labels.
+    Returns a dict mapping action_type to their rect positions for touch detection."""
     # Calculate bar values (0-100, higher is better)
     food_level = max(0, 100 - pet_state.hunger)    # Invert: 100 = well fed
     water_level = max(0, 100 - pet_state.thirst)   # Invert: 100 = hydrated
@@ -251,46 +262,46 @@ def draw_status_bars(surface: pygame.Surface, fonts: Fonts, pet_state, text_colo
     bar_spacing = int(settings.WINDOW_WIDTH * 0.02)  # Less spacing between bars
     y_position = settings.WINDOW_HEIGHT - int(settings.WINDOW_HEIGHT * 0.08)
     
-    # Emoji font
-    emoji_font = pygame.font.SysFont("Segoe UI Emoji", int(settings.WINDOW_HEIGHT * 0.05))
+    # Icon size
+    icon_size = int(settings.WINDOW_HEIGHT * 0.05)
+    icon_spacing = 12  # Space between icon and bar
     
-    # Define bars: (emoji, value, color_full, color_empty, action_type)
+    # Define bars: (action_type, value, color_full, color_empty)
     bars = [
-        ("🍔", food_level, (76, 175, 80), (200, 200, 200), "feed"),     # Green for food
-        ("💧", water_level, (33, 150, 243), (200, 200, 200), "drink"),  # Blue for water
-        ("❤️", heart_level, (244, 67, 54), (200, 200, 200), "play"),    # Red for happiness
+        ("feed", food_level, (76, 175, 80), (200, 200, 200)),     # Green for food
+        ("drink", water_level, (33, 150, 243), (200, 200, 200)),  # Blue for water
+        ("play", heart_level, (244, 67, 54), (200, 200, 200)),    # Red for happiness
     ]
-    
-    # Calculate total width and position to right of level indicator
-    emoji_width = int(settings.WINDOW_HEIGHT * 0.05)
-    emoji_spacing = 12  # Space between emoji and bar
-    total_width = len(bars) * (bar_width + emoji_width + emoji_spacing) + (len(bars) - 1) * bar_spacing
     
     # Start after level indicator (with more margin for 3-digit levels)
     level_text_width = int(settings.WINDOW_WIDTH * 0.18)  # More space for 3-digit levels
     start_x = level_text_width
     
-    emoji_rects = {}  # Store emoji positions for hit detection
+    icon_rects = {}  # Store icon positions for hit detection
     
     # Draw each bar
-    for i, (emoji, value, color_full, color_empty, action_type) in enumerate(bars):
-        x = start_x + i * (bar_width + emoji_width + emoji_spacing + bar_spacing)
-        emoji_y = y_position - int(bar_height * 0.2)
+    for i, (action_type, value, color_full, color_empty) in enumerate(bars):
+        x = start_x + i * (bar_width + icon_size + icon_spacing + bar_spacing)
+        icon_y = y_position - int(bar_height * 0.2)
         
-        # Skip drawing if this emoji is being dragged
-        if dragged_emoji != action_type:
-            # Draw emoji
-            emoji_surf = emoji_font.render(emoji, True, text_color)
-            surface.blit(emoji_surf, (x, emoji_y))
+        # Get and scale the icon
+        icon = sprites.status_icons.get(action_type)
+        if icon:
+            scaled_icon = pygame.transform.scale(icon, (icon_size, icon_size))
+        
+        # Skip drawing if this icon is being dragged
+        if dragged_icon != action_type:
+            # Draw icon
+            if icon:
+                surface.blit(scaled_icon, (x, icon_y))
             
-            # Store emoji rect for touch detection
-            emoji_rects[action_type] = pygame.Rect(x, emoji_y, emoji_surf.get_width(), emoji_surf.get_height())
+            # Store icon rect for touch detection
+            icon_rects[action_type] = pygame.Rect(x, icon_y, icon_size, icon_size)
         else:
             # Still store the rect even when dragging
-            emoji_surf = emoji_font.render(emoji, True, text_color)
-            emoji_rects[action_type] = pygame.Rect(x, emoji_y, emoji_surf.get_width(), emoji_surf.get_height())
+            icon_rects[action_type] = pygame.Rect(x, icon_y, icon_size, icon_size)
         
-        bar_x = x + emoji_width + emoji_spacing  # More space between emoji and bar
+        bar_x = x + icon_size + icon_spacing  # More space between icon and bar
         
         # Draw background bar (empty)
         bg_rect = pygame.Rect(bar_x, y_position, bar_width, bar_height)
@@ -306,17 +317,17 @@ def draw_status_bars(surface: pygame.Surface, fonts: Fonts, pet_state, text_colo
         border_color = tuple(max(0, c - 60) for c in text_color)
         pygame.draw.rect(surface, border_color, bg_rect, width=2, border_radius=int(bar_height * 0.3))
     
-    # Draw dragged emoji at cursor position if dragging
-    if dragged_emoji and drag_pos:
-        emoji_map = {"feed": "🍔", "drink": "💧", "play": "❤️"}
-        if dragged_emoji in emoji_map:
-            emoji_surf = emoji_font.render(emoji_map[dragged_emoji], True, text_color)
-            # Center the emoji on the cursor
-            drag_x = drag_pos[0] - emoji_surf.get_width() // 2
-            drag_y = drag_pos[1] - emoji_surf.get_height() // 2
-            surface.blit(emoji_surf, (drag_x, drag_y))
+    # Draw dragged icon at cursor position if dragging
+    if dragged_icon and drag_pos:
+        drag_icon = sprites.status_icons.get(dragged_icon)
+        if drag_icon:
+            scaled_drag = pygame.transform.scale(drag_icon, (icon_size, icon_size))
+            # Center the icon on the cursor
+            drag_x = drag_pos[0] - icon_size // 2
+            drag_y = drag_pos[1] - icon_size // 2
+            surface.blit(scaled_drag, (drag_x, drag_y))
     
-    return emoji_rects
+    return icon_rects
 
 
 def draw_level_indicator(surface: pygame.Surface, fonts: Fonts, level: int, text_color=(20, 20, 20)):

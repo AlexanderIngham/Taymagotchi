@@ -206,14 +206,14 @@ class App:
         self.pet_rect = draw_pet(self.screen, self.sprites, pet_mood)
         
         # Draw floating hearts
-        draw_floating_hearts(self.screen, self.fonts, self.floating_hearts, text_color)
+        draw_floating_hearts(self.screen, self.sprites, self.floating_hearts)
         
         # Draw pet status message
         draw_pet_status(self.screen, self.fonts, pet_mood, text_color)
         
-        # Draw status bars and get emoji rects for touch detection
+        # Draw status bars and get icon rects for touch detection
         self.emoji_rects = draw_status_bars(
-            self.screen, self.fonts, self.pet.state, text_color,
+            self.screen, self.fonts, self.sprites, self.pet.state, text_color,
             self.dragged_emoji, self.drag_pos
         )
         

@@ -7,7 +7,7 @@ class Settings:
     WINDOW_WIDTH: int = 480
     WINDOW_HEIGHT: int = 320
     FPS: int = 30
-    FULLSCREEN: bool = True  # True on Pi
+    FULLSCREEN: bool = False  # True on Pi
 
 
     # Weather
