@@ -107,6 +107,10 @@ class App:
                         self.dragged_emoji = action_type
                         self.drag_pos = pos
                         break
+                else:
+                    # Check if pet was tapped directly (not an emoji)
+                    if self.pet_rect and self.pet_rect.collidepoint(pos):
+                        self.sprites.trigger_interaction()
             
             elif e.type == pygame.MOUSEMOTION:
                 if self.dragged_emoji:
@@ -116,16 +120,19 @@ class App:
                 if self.dragged_emoji and self.drag_pos:
                     # Check if dropped on pet
                     if self.pet_rect and self.pet_rect.collidepoint(self.drag_pos):
-                        # Perform the action
+                        # Perform the action and trigger animation
                         if self.dragged_emoji == "feed":
                             self.pet.feed(settings.FEED_AMOUNT)
                             self.spawn_floating_hearts()
+                            self.sprites.trigger_interaction()
                         elif self.dragged_emoji == "drink":
                             self.pet.drink(settings.FEED_AMOUNT)
                             self.spawn_floating_hearts()
+                            self.sprites.trigger_interaction()
                         elif self.dragged_emoji == "play":
                             self.pet.play(settings.PLAY_AMOUNT)
                             self.spawn_floating_hearts()
+                            self.sprites.trigger_interaction()
                 
                 # Reset drag state
                 self.dragged_emoji = None
@@ -139,12 +146,15 @@ class App:
                 if e.key == pygame.K_f:
                     self.pet.feed(settings.FEED_AMOUNT)
                     self.spawn_floating_hearts()
+                    self.sprites.trigger_interaction()
                 if e.key == pygame.K_d:
                     self.pet.drink(settings.FEED_AMOUNT)
                     self.spawn_floating_hearts()
+                    self.sprites.trigger_interaction()
                 if e.key == pygame.K_p:
                     self.pet.play(settings.PLAY_AMOUNT)
                     self.spawn_floating_hearts()
+                    self.sprites.trigger_interaction()
                 if e.key == pygame.K_r:
                     self.pet.reset()
         return True

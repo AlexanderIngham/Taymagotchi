@@ -75,6 +75,12 @@ class Sprites:
         # Timing for simple idle animation
         self._last_idle_swap = 0
         self._idle_toggle = False
+        
+        # Interaction animation state
+        self._interaction_active = False
+        self._interaction_start_time = 0
+        self._interaction_duration = 1000  # Animation lasts 1 second
+        self._interaction_swap_speed = 120  # Fast swap every 120ms during interaction
 
     def _load(self, path, optional=False):
         """Safely load images with transparency."""
@@ -92,9 +98,30 @@ class Sprites:
     # ------------------------------------------------------------
     # Sprite selection
     # ------------------------------------------------------------
+    def trigger_interaction(self):
+        """Trigger the interaction animation (rapid idle switching)."""
+        self._interaction_active = True
+        self._interaction_start_time = pygame.time.get_ticks()
+    
     def pet_for_mood(self, mood: str, now_ms: int) -> pygame.Surface:
         """Select correct sprite based on mood + idle timing."""
-        # Simple animation between idle frames
+        # Check if interaction animation is active
+        if self._interaction_active:
+            elapsed = now_ms - self._interaction_start_time
+            if elapsed > self._interaction_duration:
+                # Animation finished
+                self._interaction_active = False
+            else:
+                # Fast switching during interaction
+                if now_ms - self._last_idle_swap > self._interaction_swap_speed:
+                    self._idle_toggle = not self._idle_toggle
+                    self._last_idle_swap = now_ms
+                # Return alternating idle sprites during interaction
+                if self._idle_toggle and self.pet_idle_2:
+                    return self.pet_idle_2
+                return self.pet_idle_1 or self.pet_idle_2
+        
+        # Normal slow idle animation when not interacting
         if now_ms - self._last_idle_swap > 800:
             self._idle_toggle = not self._idle_toggle
             self._last_idle_swap = now_ms
