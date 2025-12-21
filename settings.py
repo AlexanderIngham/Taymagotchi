@@ -4,10 +4,10 @@ from dataclasses import dataclass
 @dataclass
 class Settings:
     # Window / display
-    WINDOW_WIDTH: int = 480
-    WINDOW_HEIGHT: int = 320
+    WINDOW_WIDTH: int = 800
+    WINDOW_HEIGHT: int = 480
     FPS: int = 30
-    FULLSCREEN: bool = False  # True on Pi
+    FULLSCREEN: bool = True  # True on Pi
 
 
     # Weather
