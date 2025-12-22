@@ -7,7 +7,7 @@ class Settings:
     WINDOW_WIDTH: int = 800
     WINDOW_HEIGHT: int = 480
     FPS: int = 30
-    FULLSCREEN: bool = False  # True on Pi
+    FULLSCREEN: bool = True  # True on Pi
 
 
     # Weather
@@ -15,7 +15,7 @@ class Settings:
 
 
     # Pet tuning (1% per hour = 1/60 per minute)
-    STAT_DECAY_PER_MIN: float = 1.0 / 60.0  # 1% per hour for all stats
+    STAT_DECAY_PER_MIN: float = 2.0 / 60.0  # 1% per hour for all stats
     FEED_AMOUNT: float = 25
     PLAY_AMOUNT: float = 25
 
